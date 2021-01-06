@@ -1,3 +1,9 @@
+if(process.env.NODE_ENV !== 'production')
+{
+	require('dotenv').config();
+}
+
+
 const Discord = require('discord.js');
 const Canvas = require('canvas');
 
@@ -27,10 +33,18 @@ client.on('message', async message => {
     ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
     const position = [];
-    const fenString = fen.split(' ')[0];
+    var fenString;
+    if(fen.split(' ')[0] === '[FEN') fenString = fen.split(' ')[1];
+    else fenString = fen.split(' ')[0];
+
     while(fenString.startsWith(`"`) || fenString.startsWith(`[`) || fenString.startsWith(`'`)) {
-        fenString = fenString.slice(1, fenString.length - 1);
+        fenString = fenString.slice(1, fenString.length);
     }
+    while(fenString.endsWith(`"`) || fenString.endsWith(`]`) || fenString.endsWith(`'`)) {
+        fenString = fenString.slice(0, -1);
+    }
+
+    console.log(fenString);
 
     const pieces = ['K', 'Q', 'R', 'N', 'B', 'P'];
 
@@ -38,33 +52,34 @@ client.on('message', async message => {
     for(var r in fenArray)
     {
         const row = fenArray[r].split('');
+        const pushRow = [];
         for(var c in row)
         {
-            var rowbuffer = 0;
-            
             if(pieces.some((p) => { return p === row[c] }))
             {
                 //whitePiece
-                const piece = {};
-                piece.type = row[c].toLowerCase();
-                piece.color = 'w';
-                position[r][c + rowbuffer] = piece;
+                const piece = {
+                    type : row[c].toLowerCase(),
+                    color : 'w'
+                };
+                pushRow.push(piece);
             } else if(pieces.some((p) => { return p === row[c].toUpperCase() })) 
             {
                 //blackPiece
-                const piece = {};
-                piece.type = row[c].toLowerCase();
-                piece.color = 'b';
-                position[r][c + rowbuffer] = piece;
+                const piece = {
+                    type : row[c].toLowerCase(),
+                    color : 'b'
+                };
+                pushRow.push(piece);
             } else {
                 //empty
                 for(var emptyCounter = 0; emptyCounter < parseInt(row[c]); emptyCounter++)
                 {
-                    position[r][c + rowbuffer] = null;
-                    rowbuffer++;
+                    pushRow.push(null);
                 }
             }
         }
+        position.push(pushRow);
     }
 
     for(var i = 0; i <= 7; i++)
